@@ -1,0 +1,38 @@
+services:
+  beat-sheet-api:
+    image: public.ecr.aws/amazonlinux/amazonlinux:latest
+    environment:
+      - NODE_ENV=${NODE_ENV}
+    build:
+      dockerfile: Dockerfile
+    ports:
+      - '${HTTP_PORT}:${HTTP_PORT}'
+    networks:
+      - bs-network
+    volumes:
+      - ./:/beat-sheet-api
+      - /beat-sheet-api/node_modules/
+    restart: always
+    depends_on:
+      - db
+
+  db:
+    image: postgres:latest
+    environment:
+      - 'POSTGRES_PASSWORD=${POSTGRES_PASSWORD}'
+      - 'POSTGRES_USER=${POSTGRES_USER}'
+      - 'POSTGRES_DB=${POSTGRES_DB}'
+      - 'POSTGRES_PORT=${POSTGRES_PORT}'
+      - 'POSTGRES_HOST=${POSTGRES_HOST}'
+      - 'NODE_ENV=${NODE_ENV}'
+    networks:
+      - bs-network
+    ports:
+      - '${POSTGRES_PORT}:5432'
+    volumes:
+      - /var/lib/postgresql/data
+    restart: always
+
+networks:
+  bs-network:
+    name: bs-network
