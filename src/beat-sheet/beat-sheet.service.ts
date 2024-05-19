@@ -15,23 +15,25 @@ export class BeatSheetService {
   }
 
   async getSheet(sheetId: string) {
+    const { rows: titleRow } = await this._pg.query(
+      'SELECT title FROM "beat_sheet" WHERE id = $1',
+      [sheetId],
+    );
     const { rows } = await this._pg.query(
       'SELECT ' +
-        '"beat".description as "beatDescription", "beat".camera_angle as "cameraAngle", "beat".duration as "duration", "beat".id as "beatId", ' +
-        '"act".description as "actDescription", "act".id as "actId", ' +
-        '"beat_sheet".title ' +
-        'FROM "beat_sheet" ' +
-        'LEFT JOIN "act" ON "act".sheet_id = "beat_sheet".id ' +
+        '"beat".description AS "beatDescription", "beat".camera_angle AS "cameraAngle", "beat".duration AS "duration", "beat".id AS "beatId", ' +
+        '"act".description AS "actDescription", "act".id AS "actId", "beat".timestamp ' +
+        'FROM "act" ' +
         'LEFT JOIN "beat" ON "beat".act_id = "act".id ' +
-        'WHERE "act".sheet_id = $1',
+        'WHERE "act".sheet_id = $1 ORDER BY "act".timestamp, "beat".timestamp',
       [sheetId],
     );
 
+    const title = titleRow.at(0).title;
     if (!rows?.length) {
-      return [];
+      return { title, acts: [] };
     }
 
-    const title = rows.at(0).title;
 
     const actMap = rows.reduce((sheet, curr) => {
       const beat = {
@@ -45,7 +47,7 @@ export class BeatSheetService {
         sheet[curr.actId].beats.push(beat);
       } else {
         sheet[curr.actId] = {
-          actId: curr.actId,
+          id: curr.actId,
           description: curr.actDescription,
           beats: [],
         };
@@ -61,7 +63,7 @@ export class BeatSheetService {
 
   async createSheet(title: string) {
     const { rows } = await this._pg.query(
-      `INSERT INTO "beat_sheet" ("title") values ($1) returning id`,
+      `INSERT INTO "beat_sheet" ("title") VALUES ($1) RETURNING id`,
       [title],
     );
     return rows.at(0);
@@ -75,6 +77,6 @@ export class BeatSheetService {
   }
 
   async deleteSheet(sheetId: string) {
-    this._pg.query(`DELETE FROM "beat_sheet" where id = $1`, [sheetId]);
+    this._pg.query(`DELETE FROM "beat_sheet" WHERE id = $1`, [sheetId]);
   }
 }

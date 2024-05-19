@@ -12,7 +12,8 @@ export class BeatService {
     cameraAngle: string,
   ) {
     const { rows } = await this._pg.query(
-      `INSERT INTO "beat" ("act_id", "description", "duration", "camera_angle") values ($1,$2,$3,$4) returning id`,
+      'INSERT INTO "beat" ("act_id", "description", "duration", "camera_angle") VALUES ($1,$2,$3,$4) ' +
+        'RETURNING id, duration, description, camera_angle AS "cameraAngle"',
       [actId, description, duration, cameraAngle],
     );
     return rows.at(0);

@@ -7,7 +7,7 @@ export class ActService {
 
   async createAct(sheetId: string, description: string) {
     const { rows } = await this._pg.query(
-      `INSERT INTO "act" ("sheet_id", "description") values ($1, $2) returning id`,
+      `INSERT INTO "act" ("sheet_id", "description") values ($1, $2) returning id, description`,
       [sheetId, description],
     );
     return rows.at(0);
